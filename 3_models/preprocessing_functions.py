@@ -32,7 +32,7 @@ def undersample_data(df, target, random_state=42):
 #################################################################
 
 
-def preprocess_features(df, target, categorical_columns, numerical_columns, 
+def preprocess_features(df, target, categorical_columns, numerical_columns, one_hot_encoding=True,
                         numerical_tranformer = 'min_max', test_size=0.07, valid_size=0.08):
     
     #Train test split
@@ -40,10 +40,6 @@ def preprocess_features(df, target, categorical_columns, numerical_columns,
                                                                         test_size=test_size, random_state=41)
 
     Train_df, Valid_df, Train_labels, Valid_labels = train_test_split(Train_df, Train_labels, test_size=valid_size, random_state=41)
-
-    Train_labels = Train_labels
-    Valid_labels = Valid_labels
-    Test_labels = Test_labels
 
     # encoding features
     if numerical_tranformer == 'min_max':
@@ -73,6 +69,11 @@ def preprocess_features(df, target, categorical_columns, numerical_columns,
     Valid_labels_encoded = np.squeeze(ordinal_encoder.transform(np.array(Valid_labels).reshape(-1, 1)))
     Test_labels_encoded = np.squeeze(ordinal_encoder.transform(np.array(Test_labels).reshape(-1, 1)))  
 
+    if one_hot_encoding == False:
+        Train_labels_encoded = tf.argmax(Train_labels_encoded, axis=1)
+        Valid_labels_encoded = tf.argmax(Valid_labels_encoded, axis=1)
+        Test_labels_encoded = tf.argmax(Test_labels_encoded, axis=1)
+
     return (Train_df_encoded, Train_labels_encoded), (Valid_df_encoded, Valid_labels_encoded), (Test_df_encoded, Test_labels_encoded)
 
 
@@ -82,26 +83,26 @@ def preprocess_features(df, target, categorical_columns, numerical_columns,
 
 #############################################################
 
-def create_fast_preprocessing_ts_odds(Train_teams_encoded, Train_labels_encoded, Valid_teams_encoded, 
-                                                    Valid_labels_encoded,Test_teams_encoded,Test_labels_encoded):
+def create_fast_preprocessing_odds(Train_df_encoded, Train_labels_encoded, Valid_df_encoded, 
+                                                    Valid_labels_encoded,Test_df_encoded,Test_labels_encoded):
     
     # Train
-    Dataset_train_norm = tf.data.Dataset.from_tensor_slices(Train_teams_encoded)
+    Dataset_train = tf.data.Dataset.from_tensor_slices(Train_df_encoded)
     Train_labels_encoded = tf.data.Dataset.from_tensor_slices(Train_labels_encoded) 
-    Dataset_train_norm = tf.data.Dataset.zip((Dataset_train_norm, Train_labels_encoded))
+    Dataset_train = tf.data.Dataset.zip((Dataset_train, Train_labels_encoded))
 
     # Valid
-    Dataset_valid_norm = tf.data.Dataset.from_tensor_slices(Valid_teams_encoded)
+    Dataset_valid = tf.data.Dataset.from_tensor_slices(Valid_df_encoded)
     Valid_labels_encoded = tf.data.Dataset.from_tensor_slices(Valid_labels_encoded) 
-    Dataset_valid_norm = tf.data.Dataset.zip((Dataset_valid_norm, Valid_labels_encoded))
+    Dataset_valid = tf.data.Dataset.zip((Dataset_valid, Valid_labels_encoded))
 
     # Test
-    Dataset_test_norm = tf.data.Dataset.from_tensor_slices(Test_teams_encoded)
+    Dataset_test = tf.data.Dataset.from_tensor_slices(Test_df_encoded)
     Test_labels_encoded = tf.data.Dataset.from_tensor_slices(Test_labels_encoded)
-    Dataset_test_norm = tf.data.Dataset.zip((Dataset_test_norm, Test_labels_encoded))
+    Dataset_test = tf.data.Dataset.zip((Dataset_test, Test_labels_encoded))
 
-    Dataset_train_norm = Dataset_train_norm.batch(32).prefetch(tf.data.AUTOTUNE) 
-    Dataset_valid_norm = Dataset_valid_norm.batch(32).prefetch(tf.data.AUTOTUNE)
-    Dataset_test_norm = Dataset_test_norm.batch(32).prefetch(tf.data.AUTOTUNE)
+    Dataset_train = Dataset_train.batch(32).prefetch(tf.data.AUTOTUNE) 
+    Dataset_valid = Dataset_valid.batch(32).prefetch(tf.data.AUTOTUNE)
+    Dataset_test = Dataset_test.batch(32).prefetch(tf.data.AUTOTUNE)
 
-    return Dataset_train_norm, Dataset_valid_norm, Dataset_test_norm
+    return Dataset_train, Dataset_valid, Dataset_test
