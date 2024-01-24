@@ -31,40 +31,31 @@ def undersample_data(df, target, random_state=42):
 #################################################################
 
 
-def preprocess_features(df, target, categorical_columns, numerical_columns):
+def preprocess_features(df, target, categorical_columns, numerical_columns, numerical_tranformer = 'min_max'):
     #Train test split
     Train_df, Test_df, Train_labels, Test_labels = train_test_split(df.drop(target, axis=1), df[target],
                                                                         test_size=0.07, random_state=41)
 
     Train_df, Valid_df, Train_labels, Valid_labels = train_test_split(Train_df, Train_labels, test_size=0.08, random_state=41)
 
-    # encoding categorical features
-    teams_transf = make_column_transformer(
-    (OneHotEncoder(handle_unknown='ignore'), numerical_columns),
-    sparse_threshold=0  
-    )
-
-    teams_transf.fit(Train_df)
-
-    Train_teams_encoded = teams_transf.transform(Train_df)
-    Valid_teams_encoded = teams_transf.transform(Valid_df)
-    Test_teams_encoded = teams_transf.transform(Test_df)
-
-    #encoding numerical features
-    Train_dict_features_norm = Train_dict_features.copy()
-    Valid_dict_features_norm = Valid_dict_features.copy()
-    Test_dict_features_norm = Test_dict_features.copy()
-
-    for feature in list(Train_dict_features.keys()):
-        feature_list = Train_dict_features_norm[feature].columns
-        numerical_transf = make_column_transformer(
-            (MinMaxScaler(), feature_list), 
-            sparse_threshold=0  
+    # encoding features
+    if numerical_tranformer == 'min_max':
+        ct_features = make_column_transformer(
+            (MinMaxScaler(), numerical_columns),
+            (OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_columns )
         )
-        numerical_transf.fit(Train_dict_features[feature])
-    Train_dict_features_norm[feature] = numerical_transf.transform(Train_dict_features_norm[feature])
-    Valid_dict_features_norm[feature] = numerical_transf.transform(Valid_dict_features_norm[feature])
-    Test_dict_features_norm[feature] = numerical_transf.transform(Test_dict_features_norm[feature])
+    if numerical_tranformer == 'log_min_max':
+        df[numerical_columns] = np.log(df[numerical_columns])
+        ct_features = make_column_transformer(
+            (MinMaxScaler(), numerical_columns),
+            (OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_columns )
+        )
+
+    ct_features.fit(Train_df)
+
+    Train_teams_encoded = ct_features.transform(Train_df)
+    Valid_teams_encoded = ct_features.transform(Valid_df)
+    Test_teams_encoded = ct_features.transform(Test_df)
 
     #encoding labels
     label_transf = make_column_transformer(
@@ -78,5 +69,5 @@ def preprocess_features(df, target, categorical_columns, numerical_columns):
     Valid_labels_encoded = label_transf.transform(Valid_labels)
     Test_labels_encoded = label_transf.transform(Test_labels)
 
-    return df
+    return (Train_teams_encoded, Train_labels_encoded), (Valid_teams_encoded, Valid_labels_encoded), (Test_teams_encoded, Test_labels_encoded)
 
