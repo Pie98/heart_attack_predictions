@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+import tensorflow as tf
 
 #############################################################
 
@@ -74,3 +75,33 @@ def preprocess_features(df, target, categorical_columns, numerical_columns,
 
     return (Train_df_encoded, Train_labels_encoded), (Valid_df_encoded, Valid_labels_encoded), (Test_df_encoded, Test_labels_encoded)
 
+
+#############################################################
+
+# ----------- create_fast_preprocessing_ts_odds ------------#
+
+#############################################################
+
+def create_fast_preprocessing_ts_odds(Train_teams_encoded, Train_labels_encoded, Valid_teams_encoded, 
+                                                    Valid_labels_encoded,Test_teams_encoded,Test_labels_encoded):
+    
+    # Train
+    Dataset_train_norm = tf.data.Dataset.from_tensor_slices(Train_teams_encoded)
+    Train_labels_encoded = tf.data.Dataset.from_tensor_slices(Train_labels_encoded) 
+    Dataset_train_norm = tf.data.Dataset.zip((Dataset_train_norm, Train_labels_encoded))
+
+    # Valid
+    Dataset_valid_norm = tf.data.Dataset.from_tensor_slices(Valid_teams_encoded)
+    Valid_labels_encoded = tf.data.Dataset.from_tensor_slices(Valid_labels_encoded) 
+    Dataset_valid_norm = tf.data.Dataset.zip((Dataset_valid_norm, Valid_labels_encoded))
+
+    # Test
+    Dataset_test_norm = tf.data.Dataset.from_tensor_slices(Test_teams_encoded)
+    Test_labels_encoded = tf.data.Dataset.from_tensor_slices(Test_labels_encoded)
+    Dataset_test_norm = tf.data.Dataset.zip((Dataset_test_norm, Test_labels_encoded))
+
+    Dataset_train_norm = Dataset_train_norm.batch(32).prefetch(tf.data.AUTOTUNE) 
+    Dataset_valid_norm = Dataset_valid_norm.batch(32).prefetch(tf.data.AUTOTUNE)
+    Dataset_test_norm = Dataset_test_norm.batch(32).prefetch(tf.data.AUTOTUNE)
+
+    return Dataset_train_norm, Dataset_valid_norm, Dataset_test_norm
