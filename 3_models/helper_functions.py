@@ -7,12 +7,16 @@ import matplotlib.image as mpimg
 import random
 import datetime
 
-class CSVLoggerCallback(tf.keras.callbacks.Callback):
-    def __init__(self, filename, experiment_name, overwrite=False):
+class CSVLoggerCallback_dense(tf.keras.callbacks.Callback):
+    def __init__(self, filename, experiment_name, num_layers, num_neurons, Dropout, batch_normalization, overwrite=False):
         self.filename = filename
         self.experiment_name = experiment_name
-        self.fieldnames = ['experiment', 'datetime', 'epoch', 'loss', 'accuracy', 'val_loss',
-                           'val_accuracy']  # Aggiungi altre metriche secondo necessità
+        self.num_layers = num_layers
+        self.num_neurons = num_neurons
+        self.Dropout = Dropout
+        self.batch_normalization = batch_normalization
+        self.fieldnames = ['experiment', 'num_layers','num_neurons', 'Dropout','batch_normalization', 'datetime', 
+                           'epoch', 'loss', 'accuracy', 'val_loss', 'val_accuracy']  
         self.first_time = overwrite
 
         if self.first_time:
@@ -28,6 +32,10 @@ class CSVLoggerCallback(tf.keras.callbacks.Callback):
         current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         row = {
             'experiment': self.experiment_name,
+            'num_layers': self.num_layers,
+            'num_neurons': self.num_neurons,
+            'Dropout': self.Dropout,
+            'batch_normalization': self.batch_normalization,
             'datetime': current_time,
             'epoch': epoch,
             'loss': logs.get('loss'),
@@ -40,42 +48,6 @@ class CSVLoggerCallback(tf.keras.callbacks.Callback):
         with open(self.filename, mode='a', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=self.fieldnames)
             writer.writerow(row)
-
-
-class CSVLoggerCallback_mae(tf.keras.callbacks.Callback):
-    def __init__(self, filename, experiment_name, overwrite=False):
-        self.filename = filename
-        self.experiment_name = experiment_name
-        self.fieldnames = ['experiment', 'datetime', 'epoch', 'loss', 'mae', 'val_loss',
-                           'val_mae']  # Aggiungi altre metriche secondo necessità
-        self.first_time = overwrite
-
-        if self.first_time:
-            write_mode = 'w'
-        else:
-            write_mode = 'a'
-        with open(self.filename, mode=write_mode, newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=self.fieldnames)
-            if self.first_time:
-                writer.writeheader()
-
-    def on_epoch_end(self, epoch, logs=None):
-        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        row = {
-            'experiment': self.experiment_name,
-            'datetime': current_time,
-            'epoch': epoch,
-            'loss': logs.get('loss'),
-            'mae': logs.get('mae'),
-            'val_loss': logs.get('val_loss'),
-            'val_mae': logs.get('val_mae'),
-            # Aggiungi altre metriche secondo necessità
-        }
-
-        with open(self.filename, mode='a', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=self.fieldnames)
-            writer.writerow(row)
-
 
 #plotto la loss e accuracy curves separatamente
 def plot_loss_curve(history):
