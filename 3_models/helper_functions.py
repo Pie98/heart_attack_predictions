@@ -8,14 +8,15 @@ import random
 import datetime
 
 class CSVLoggerCallback_dense(tf.keras.callbacks.Callback):
-    def __init__(self, filename, experiment_name, num_layers, num_neurons, Dropout, batch_normalization, overwrite=False):
+    def __init__(self, filename, experiment_name, num_layers, num_neurons, Dropout, batch_normalization, optimizer, overwrite=False):
         self.filename = filename
         self.experiment_name = experiment_name
         self.num_layers = num_layers
         self.num_neurons = num_neurons
         self.Dropout = Dropout
         self.batch_normalization = batch_normalization
-        self.fieldnames = ['experiment', 'num_layers','num_neurons', 'Dropout','batch_normalization', 'datetime', 
+        self.optimizer =optimizer
+        self.fieldnames = ['experiment', 'num_layers','num_neurons', 'Dropout','batch_normalization','optimizer', 'datetime', 
                            'epoch', 'loss', 'accuracy', 'val_loss', 'val_accuracy']  
         self.first_time = overwrite
 
@@ -36,6 +37,7 @@ class CSVLoggerCallback_dense(tf.keras.callbacks.Callback):
             'num_neurons': self.num_neurons,
             'Dropout': self.Dropout,
             'batch_normalization': self.batch_normalization,
+            'optimizer': self.optimizer,
             'datetime': current_time,
             'epoch': epoch,
             'loss': logs.get('loss'),
