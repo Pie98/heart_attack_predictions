@@ -61,7 +61,7 @@ def preprocess_features(df, target, categorical_columns, numerical_columns, one_
     Test_df_encoded = ct_features.transform(Test_df)
 
     # Create an OrdinalEncoder
-    ordinal_encoder = OneHotEncoder(sparse=False)
+    ordinal_encoder = OneHotEncoder(sparse_output=False)
     # Training the OrdinalEncoder on Train_labels
     Train_labels_encoded = ordinal_encoder.fit(np.array(Train_labels).reshape(-1, 1))
 
@@ -144,7 +144,7 @@ def preprocess_features_retrieve_df(df, target, categorical_columns, numerical_c
     Test_df_encoded = ct_features.transform(Test_df)
 
     # Create an OrdinalEncoder
-    ordinal_encoder = OneHotEncoder(sparse=False)
+    ordinal_encoder = OneHotEncoder(sparse_output=False)
     # Training the OrdinalEncoder on Train_labels
     Train_labels_encoded = ordinal_encoder.fit(np.array(Train_labels).reshape(-1, 1))
 
