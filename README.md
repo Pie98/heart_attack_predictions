@@ -1,4 +1,4 @@
-# Chest X-rays image classification
+# heart_attack_predictions
 
 ## Overview
 
