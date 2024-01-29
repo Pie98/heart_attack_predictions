@@ -45,5 +45,5 @@ The repository is organized as follows:
 
 ### 5_results
 
--**results_evaluation:** In this notebook we evaluate the results of the best performing model.
+- **results_evaluation:** In this notebook we evaluate the results of the best performing model.
 
